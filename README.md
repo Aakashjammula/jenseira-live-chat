@@ -32,7 +32,8 @@ An interactive 3D avatar with AI-powered conversations, text-to-speech, and accu
 
 **1. Setup Environment**
 ```bash
-# Create .env file in root directory
+# Create .env file in backend directory
+cd backend
 echo "GEMINI_API_KEY=your_api_key_here" > .env
 ```
 
@@ -47,43 +48,46 @@ Backend runs at `http://localhost:3001`
 **3. Start Frontend (Next.js)**
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 Frontend runs at `http://localhost:3000`
 
 **4. Open Browser**
-Navigate to `http://localhost:3000` and start chatting!
+Navigate to `http://localhost:3000` and start chatting with Jenseira!
 
 ## 🎮 Usage
 
 1. Type your message in the input box
-2. Press Enter or click "Generate & Speak"
-3. Avatar responds with AI-generated speech and lip-sync
+2. Press Enter or click Send
+3. Jenseira responds with AI-generated speech and lip-sync
 
-That's it! The avatar will:
-- Generate an AI response using Gemini
-- Convert it to speech
-- Animate lip-sync in real-time
+Features:
+- AI-powered conversations using Gemini 2.5 Flash
+- Real-time text-to-speech with accurate lip-sync
+- Interactive animations and gestures
+- Dark/Light theme toggle
+- Mute/Unmute audio controls
 
 ## 🔌 API Endpoints
 
-### POST /llm
-Get AI response (text only)
-
-```bash
-curl -X POST http://localhost:3001/llm \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Hello!"}'
-```
-
 ### POST /tts
-Generate speech with lip-sync data
+Generate AI response with speech and lip-sync data
 
 ```bash
 curl -X POST http://localhost:3001/tts \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello!"}'
 ```
+
+Response includes:
+- AI-generated text response
+- Audio data (Float32Array)
+- Phonemes for lip-sync
+- Duration timings
+
+### GET /animation/stream
+Server-Sent Events stream for real-time avatar animations
 
 ### GET /health
 Health check
@@ -95,41 +99,61 @@ curl http://localhost:3001/health
 ## 📁 Project Structure
 
 ```
-avatar-tts/
+jenseira-live-chat/
 ├── backend/                    # Express.js API
 │   ├── data/
 │   │   └── cmudict.json       # Pronunciation dictionary
 │   ├── routes/
+│   │   ├── animation-stream.js # SSE for animations
+│   │   ├── avatar.js          # Avatar commands
 │   │   ├── llm.js             # LLM endpoint
 │   │   └── tts.js             # TTS endpoint
 │   ├── services/
+│   │   ├── avatar.js          # Avatar service
 │   │   ├── gemini.js          # Gemini AI
 │   │   ├── tts.js             # TTS generation
 │   │   └── phoneme.js         # Phoneme processing
 │   ├── utils/
 │   │   └── fastPhonemeDurations.js  # Duration estimation
+│   ├── voices/                # Voice embeddings (F1, F2, M1, M2)
 │   ├── server.js              # Express server
+│   ├── .env                   # Environment variables
 │   └── package.json
 │
-├── frontend/                   # Next.js Frontend
+├── frontend/                   # Next.js 15 Frontend
 │   ├── app/
 │   │   ├── page.tsx           # Main page
 │   │   ├── layout.tsx         # Root layout
 │   │   └── globals.css        # Global styles
 │   ├── components/
-│   │   └── AvatarChat.tsx     # Main component
+│   │   └── AvatarChat.tsx     # Main chat component
+│   ├── hooks/
+│   │   ├── useAvatar.ts       # Avatar hook
+│   │   └── useChat.ts         # Chat hook
 │   ├── lib/
-│   │   ├── avatar.ts          # Avatar initialization
-│   │   ├── speech.ts          # TTS & lip-sync
-│   │   └── visemes.ts         # Phoneme mapping
+│   │   ├── constants/
+│   │   │   ├── config.ts      # Avatar config
+│   │   │   └── visemes.ts     # Phoneme mapping
+│   │   ├── services/
+│   │   │   ├── api.ts         # API client
+│   │   │   ├── avatar.ts      # Avatar loader
+│   │   │   ├── avatar-controller.ts
+│   │   │   ├── speech.ts      # Speech service
+│   │   │   └── talkinghead-loader.ts
+│   │   ├── types/
+│   │   │   └── index.ts       # TypeScript types
+│   │   └── utils/
+│   │       ├── audio.ts       # Audio utilities
+│   │       ├── viseme-converter.ts
+│   │       └── word-timing.ts
 │   ├── public/
-│   │   └── avatars/           # 3D models
+│   │   └── avatars/
+│   │       └── jenseira.glb   # 3D avatar model
 │   └── package.json
 │
-├── avatars/                    # 3D models (7 avatars)
-├── backend/
-│   └── voices/                 # Voice embeddings (4 voices)
-├── .env                        # Environment variables
+├── assets/                     # Screenshots and media
+├── docker-compose.yml          # Docker setup
+├── .gitignore
 └── README.md
 ```
 
@@ -147,17 +171,21 @@ avatar-tts/
 **Backend:**
 ```bash
 cd backend
-npm start
-# Edit files in backend/
+npm run dev
 # Server auto-restarts with nodemon
 ```
 
 **Frontend:**
 ```bash
 cd frontend
-python -m http.server 3000
-# Edit files in frontend/
-# Just refresh browser
+npm run dev
+# Next.js hot reload enabled
+```
+
+**Docker (Optional):**
+```bash
+docker-compose up
+# Runs both frontend and backend
 ```
 
 ## ⚙️ Customization
@@ -169,15 +197,25 @@ const voiceBuffer = await fs.readFile("../voices/F1.bin"); // F1, F2, M1, or M2
 ```
 
 ### Change Avatar
-Edit `frontend/js/avatar.js`:
-```javascript
-url: "../avatars/julia.glb"  // david, jin, mike, mikey, julia, jenseira
+Edit `frontend/lib/constants/config.ts`:
+```typescript
+export const AVATAR_CONFIG = {
+  DEFAULT_AVATAR: '/avatars/jenseira.glb',
+  BODY_TYPE: 'F',
+  MOOD: 'neutral',
+}
 ```
 
 ### Change AI Model
 Edit `backend/services/gemini.js`:
 ```javascript
-model: 'gemini-2.5-flash'  // or gemini-1.5-pro
+model: 'gemini-2.0-flash-exp'  // or gemini-1.5-pro, gemini-2.5-flash
+```
+
+### Customize System Prompt
+Edit `backend/services/gemini.js`:
+```javascript
+systemPrompt: "You are a helpful assistant. Your name is Jenseira..."
 ```
 
 ## 📊 Performance
@@ -189,15 +227,29 @@ model: 'gemini-2.5-flash'  // or gemini-1.5-pro
 
 ## 🚢 Deployment
 
-**Backend:**
+**Using Docker:**
+```bash
+docker-compose up -d
+```
+
+**Manual Deployment:**
+
+Backend:
 ```bash
 cd backend
 npm install --production
-node server.js
+npm start
 ```
 
-**Frontend:**
-Serve `frontend/` folder with any static server (nginx, Apache, CDN)
+Frontend:
+```bash
+cd frontend
+npm install
+npm run build
+npm start
+```
+
+Deploy frontend build to Vercel, Netlify, or any Node.js hosting platform.
 
 ## 🤝 Contributing
 
