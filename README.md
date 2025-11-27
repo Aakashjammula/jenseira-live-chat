@@ -1,6 +1,8 @@
-# Avatar TTS - AI-Powered Talking Avatar
+# Jenseira - AI-Powered Talking Avatar
 
 > ✅ **Clean & Production Ready**
+
+![Jenseira Avatar](./assets/jenseira-screenshot.png)
 
 An interactive 3D avatar with AI-powered conversations, text-to-speech, and accurate lip-sync animation.
 
