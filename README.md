@@ -8,11 +8,12 @@ An interactive 3D avatar with AI-powered conversations, text-to-speech, and accu
 
 ## ✨ Features
 
-- 🤖 **AI Conversations** - Powered by Google Gemini 2.5 Flash
+- 🤖 **AI Conversations** - Powered by LM Studio (Qwen3-VL-4B) with Tavily Search
 - 🎤 **Text-to-Speech** - High-quality voice synthesis with Supertonic
 - 👄 **Lip Sync** - Accurate phoneme-based animation
 - 🎭 **3D Avatar** - Interactive Ready Player Me avatars
 - ⚡ **Real-time** - Fast response and smooth animations
+- 🔍 **Web Search** - Real-time information via Tavily API
 
 ## 🎯 Tech Stack
 
@@ -24,17 +25,24 @@ An interactive 3D avatar with AI-powered conversations, text-to-speech, and accu
 
 **Backend:**
 - Express.js + Node.js
-- Google Gemini 2.5 Flash AI
+- LM Studio (Qwen3-VL-4B) via OpenAI API
+- LangChain Agent with Tavily Search
 - Supertonic TTS (HuggingFace)
 - CMU Pronunciation Dictionary
 
 ## 🚀 Quick Start
 
+**Prerequisites:**
+- Install and run [LM Studio](https://lmstudio.ai/) with `qwen/qwen3-vl-4b` model
+- Start LM Studio server on `http://localhost:1234`
+
 **1. Setup Environment**
 ```bash
-# Create .env file in backend directory
-cd backend
-echo "GEMINI_API_KEY=your_api_key_here" > .env
+# Create .env file in root directory
+PORT=3001
+TAVILY_API_KEY=your_tavily_api_key_here
+OPENAI_API_KEY=lm-studio
+OPENAI_API_BASE=http://localhost:1234/v1
 ```
 
 **2. Start Backend**
@@ -63,7 +71,8 @@ Navigate to `http://localhost:3000` and start chatting with Jenseira!
 3. Jenseira responds with AI-generated speech and lip-sync
 
 Features:
-- AI-powered conversations using Gemini 2.5 Flash
+- AI-powered conversations using LM Studio (local LLM)
+- Real-time web search via Tavily API
 - Real-time text-to-speech with accurate lip-sync
 - Interactive animations and gestures
 - Dark/Light theme toggle
@@ -209,7 +218,13 @@ export const AVATAR_CONFIG = {
 ### Change AI Model
 Edit `backend/services/gemini.js`:
 ```javascript
-model: 'gemini-2.0-flash-exp'  // or gemini-1.5-pro, gemini-2.5-flash
+const model = new ChatOpenAI({
+  model: "qwen/qwen3-vl-4b",  // Change to any LM Studio model
+  temperature: 0.7,
+  configuration: {
+    baseURL: LM_STUDIO_BASE_URL,
+  },
+});
 ```
 
 ### Customize System Prompt
@@ -217,6 +232,11 @@ Edit `backend/services/gemini.js`:
 ```javascript
 systemPrompt: "You are a helpful assistant. Your name is Jenseira..."
 ```
+
+### Switch to Cloud AI (Optional)
+To use OpenAI/Gemini instead of LM Studio:
+1. Update `.env` with your API key
+2. Modify `backend/services/gemini.js` to use the appropriate SDK
 
 ## 📊 Performance
 
